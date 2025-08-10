@@ -394,50 +394,66 @@
 
       // Chatbot mode: build improved prompts with copy buttons and best practices, incorporating user's goal
       if (mode === 'chatbots') {
+        // Chatbot mode builds prompts tailored to selected needs and learning targets.
         resultsHeader.textContent = 'Chatbot Prompts';
-        summaryPara.innerHTML = `Here are some rich prompts you can try with your favourite chatbot. Replace <strong>[topic]</strong> with a specific concept you plan to teach.${description ? ' Your goal: ' + description : ''}`;
-        let prompts = [];
+        summaryPara.innerHTML = `Here are some rich prompts you can try with your favourite chatbot. Replace <strong>[standard or learning target]</strong> with the appropriate standard or learning target for your lesson.${description ? ' Your goal: ' + description : ''}`;
+        const promptsWithFlags = [];
         // Build improved prompts based on selected needs (augmented by description)
         needsForSuggestions.forEach(n => {
+          let promptText = '';
           switch (n) {
             case 'Plan':
-              prompts.push(`Act as a ${gradeLabel(grade)} ${subjectLabel(subject)} teacher. Brainstorm <strong>three creative lesson plan ideas</strong> for next week’s class on [topic]. Each idea should include learning objectives, an engaging opening activity (e.g., a debate, quick experiment or discussion), and a brief formative assessment or exit ticket. Use active learning strategies rather than worksheets.`);
+              promptText = `Act as a ${gradeLabel(grade)} ${subjectLabel(subject)} teacher. Brainstorm <strong>three creative lesson plan ideas</strong> for next week’s class that address [standard or learning target]. Each idea should include learning objectives, an engaging opening activity (e.g., a debate, quick experiment or discussion), and a brief formative assessment or exit ticket. Use active learning strategies rather than worksheets.`;
               break;
             case 'Design':
-              prompts.push(`I am teaching ${subjectLabel(subject)} to ${gradeLabel(grade)} students. Generate <strong>three engaging warm‑up or interactive activity ideas</strong> for a lesson on [topic]. Describe the activity type (poll, discussion, collaborative doodle, or small group brainstorm), suggest visuals or tech tools (slides, Jamboard, virtual whiteboard), and include one student check for understanding.`);
+              promptText = `I am teaching ${subjectLabel(subject)} to ${gradeLabel(grade)} students. Generate <strong>three engaging warm‑up or interactive activity ideas</strong> aligned to [standard or learning target]. Describe the activity type (poll, discussion, collaborative doodle, or small group brainstorm), suggest visuals or tech tools (slides, Jamboard, virtual whiteboard), and include one student check for understanding.`;
               break;
             case 'Assess':
-              prompts.push(`Design <strong>five diverse formative assessment ideas</strong> for a ${gradeLabel(grade)} ${subjectLabel(subject)} lesson on [topic]. Include quick writes, think‑pair‑share prompts, demonstrations, short quizzes and one open‑ended question. Provide tips for feedback or next steps instead of just right/wrong answers.`);
+              promptText = `Design <strong>five diverse formative assessment ideas</strong> aligned to [standard or learning target] for a ${gradeLabel(grade)} ${subjectLabel(subject)} lesson. Include quick writes, think‑pair‑share prompts, demonstrations, short quizzes and one open‑ended question. Provide tips for feedback or next steps instead of just right/wrong answers.`;
               break;
             case 'Research':
-              prompts.push(`Explain [topic] for ${gradeLabel(grade)} ${subjectLabel(subject)} students. Provide <strong>three key points</strong>, two thought‑provoking discussion questions and <strong>two reliable sources or citations</strong>. Suggest one follow‑up inquiry or experiment students might explore.`);
+              promptText = `Explain [standard or learning target] for ${gradeLabel(grade)} ${subjectLabel(subject)} students. Provide <strong>three key points</strong>, two thought‑provoking discussion questions and <strong>two reliable sources or citations</strong>. Suggest one follow‑up inquiry or experiment students might explore.`;
               break;
             case 'PBL':
-              prompts.push(`For a project‑based learning unit in a ${gradeLabel(grade)} ${subjectLabel(subject)} class, propose <strong>three driving questions</strong> focused on [topic]. For each question, include a hands‑on performance task idea and a possible final product (e.g., podcast, poster, interactive map).`);
+              promptText = `For a project‑based learning unit in a ${gradeLabel(grade)} ${subjectLabel(subject)} class, propose <strong>three driving questions</strong> based on [standard or learning target]. For each question, include a hands‑on performance task idea and a possible final product (e.g., podcast, poster, interactive map).`;
               break;
             case 'Workflow':
-              prompts.push(`Break down a class project on [topic] for ${gradeLabel(grade)} ${subjectLabel(subject)} students into a <strong>step‑by‑step timeline</strong>. Include estimated durations, suggested student roles or groups, and one digital tool (e.g., Trello, Google Tasks) to manage tasks.`);
+              promptText = `Break down a class project aligned to [standard or learning target] for ${gradeLabel(grade)} ${subjectLabel(subject)} students into a <strong>step‑by‑step timeline</strong>. Include estimated durations, suggested student roles or groups, and one digital tool (e.g., Trello, Google Tasks) to manage tasks.`;
               break;
             case 'Differentiation':
-              prompts.push(`Adapt a ${subjectLabel(subject)} lesson on [topic] to <strong>three reading levels</strong> (below, at and above grade level) for ${gradeLabel(grade)} students. Summarize the content for each level and suggest one higher‑order thinking activity to assess comprehension for each.`);
+              promptText = `Adapt a ${subjectLabel(subject)} lesson aligned to [standard or learning target] to <strong>three reading levels</strong> (below, at and above grade level) for ${gradeLabel(grade)} students. Summarize the content for each level and suggest one higher‑order thinking activity to assess comprehension for each.`;
               break;
             case 'Communication':
-              prompts.push(`Act as a ${gradeLabel(grade)} ${subjectLabel(subject)} teacher writing to families. Create <strong>three engaging communication ideas</strong> about [topic] (e.g., weekly newsletter section, class blog post, family discussion prompt). Each idea should highlight what students are learning, suggest a simple at‑home extension or conversation starter, and invite feedback or collaboration from families or caregivers.`);
+              promptText = `Act as a ${gradeLabel(grade)} ${subjectLabel(subject)} teacher writing to families. Create <strong>three engaging communication ideas</strong> about [standard or learning target] (e.g., weekly newsletter section, class blog post, family discussion prompt). Each idea should highlight what students are learning, suggest a simple at‑home extension or conversation starter, and invite feedback or collaboration from families or caregivers.`;
               break;
             default:
-              prompts.push(`Brainstorm <strong>three ways AI can assist</strong> with a ${gradeLabel(grade)} ${subjectLabel(subject)} lesson on [topic], explaining the benefit of each approach.`);
+              promptText = `Brainstorm <strong>three ways AI can assist</strong> with a ${gradeLabel(grade)} ${subjectLabel(subject)} lesson related to [standard or learning target], explaining the benefit of each approach.`;
           }
+          // Determine whether to append the goal based on relevance
+          let appendGoal = false;
+          if (description) {
+            const keywords = augmentKeywordMap[n] || [];
+            for (let i = 0; i < keywords.length; i++) {
+              if (descLowerForAugment.includes(keywords[i])) {
+                appendGoal = true;
+                break;
+              }
+            }
+          }
+          promptsWithFlags.push({ text: promptText, appendGoal });
         });
-        // Incorporate user's goal into prompts (if provided)
-        const descSnippet = description ? ` Keep in mind my goal: ${description}` : '';
-        prompts = prompts.map(p => p + descSnippet);
+        // Build final prompts array with or without goal
+        let prompts = promptsWithFlags.map(item => {
+          if (item.appendGoal) {
+            return item.text + ` Keep in mind my goal: ${description}`;
+          }
+          return item.text;
+        });
         // Limit prompts to between 3 and 5: take up to 5, but ensure at least 3 by repeating items if necessary
         const limitedPrompts = [];
-        // Fill with up to 5 unique prompts
         for (let i = 0; i < prompts.length && limitedPrompts.length < 5; i++) {
           limitedPrompts.push(prompts[i]);
         }
-        // If fewer than 3 prompts, repeat entries to reach 3
         let repIndex = 0;
         while (limitedPrompts.length < 3 && prompts.length > 0) {
           limitedPrompts.push(prompts[repIndex % prompts.length]);
@@ -450,12 +466,10 @@
           card.style.display = 'flex';
           card.style.justifyContent = 'space-between';
           card.style.alignItems = 'center';
-          // text container
           const pEl = document.createElement('p');
           pEl.innerHTML = prompt;
           pEl.style.flex = '1';
           pEl.style.margin = '0';
-          // copy button
           const copyBtn = document.createElement('button');
           copyBtn.className = 'copy-btn';
           copyBtn.textContent = 'Copy';
@@ -478,7 +492,6 @@
         botDiv.className = 'chatbot-links';
         botDiv.innerHTML = `Try these prompts in: <a href="https://chat.openai.com" target="_blank" rel="noopener">ChatGPT</a>, <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a>, <a href="https://gemini.google.com" target="_blank" rel="noopener">Gemini</a>, <a href="https://copilot.microsoft.com" target="_blank" rel="noopener">Copilot</a>`;
         resultsContent.appendChild(botDiv);
-
         // Chatbot general tips (always visible)
         const tipsHeader = document.createElement('h4');
         tipsHeader.textContent = 'General tips for using chatbots';
@@ -498,7 +511,6 @@
           tipsList.appendChild(li);
         });
         resultsContent.appendChild(tipsList);
-
         // Show results and scroll into view
         resultsDiv.style.display = 'block';
         resultsDiv.scrollIntoView({ behavior: 'smooth' });
