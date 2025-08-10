@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Exploration & Suggestion App</title>
+  <style>
+    /* Michigan Virtual–inspired colour palette */
+    :root {
+      --primary-color: #003764;        /* dark navy blue for headers */
+      --secondary-color: #00A7E1;      /* bright blue for buttons and highlights */
+      --accent-color: #B5CC34;         /* green accent reminiscent of brand palette */
+      --light-bg: #f7f9fb;             /* light background for page */
+      --card-bg: #ffffff;              /* card background */
+      --border-color: #e0e6ed;         /* subtle border colour */
+    }
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: var(--light-bg);
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+      color: var(--primary-color);
+    }
+    .section {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      border: 1px solid var(--border-color);
+    }
+    .section h2 {
+      margin-top: 0;
+      font-size: 1.1em;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 5px;
+      color: var(--primary-color);
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    select, textarea {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background-color: #fff;
+    }
+    .mode-group {
+      /* old radio styles removed */
+    }
+    .mode-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .mode-btn {
+      flex: 1;
+      padding: 12px 16px;
+      font-size: 1em;
+      font-weight: bold;
+      border: 2px solid var(--border-color);
+      border-radius: 6px;
+      background-color: #f1f5f9;
+      color: var(--primary-color);
+      cursor: pointer;
+      transition: background-color 0.2s, border-color 0.2s;
+    }
+    .mode-btn.active {
+      background-color: var(--secondary-color);
+      border-color: var(--secondary-color);
+      color: #fff;
+    }
+
+    /* Needs buttons styling */
+    .needs-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    /* Each need button acts as a selectable card. */
+    .need-btn {
+      flex: 1 1 45%;
+      display: flex;
+      gap: 8px;
+      padding: 12px;
+      background-color: #f1f5f9;
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    }
+    .need-btn .icon {
+      font-size: 1.5em;
+      flex-shrink: 0;
+    }
+    .need-btn .text {
+      display: flex;
+      flex-direction: column;
+    }
+    .need-btn .text strong {
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .need-btn .text small {
+      font-size: 0.75em;
+      line-height: 1.2;
+      color: #555;
+    }
+    .need-btn.selected {
+      background-color: var(--secondary-color);
+      border-color: var(--secondary-color);
+      color: #fff;
+    }
+    .need-btn.selected .icon, .need-btn.selected .text strong, .need-btn.selected .text small {
+      color: #fff;
+    }
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 5px;
+    }
+    .checkbox-item {
+      flex: 1 1 45%;
+      background-color: #f1f5f9;
+      padding: 8px;
+      border-radius: 4px;
+    }
+    .checkbox-item input {
+      margin-right: 5px;
+    }
+    button {
+      display: block;
+      background-color: var(--secondary-color);
+      color: #fff;
+      padding: 10px 24px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1em;
+      margin-top: 20px;
+    }
+    button:hover {
+      background-color: #0089b7;
+    }
+
+    /* Copy button styling for chatbot prompts */
+    .copy-btn {
+      background-color: var(--secondary-color);
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85em;
+      transition: background-color 0.2s;
+    }
+    .copy-btn:hover {
+      background-color: #0089b7;
+    }
+    #results {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #eef4f8;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+    #results h3 {
+      margin-top: 0;
+      color: var(--primary-color);
+      font-weight: bold;
+      font-size: 1.2em;
+    }
+    .suggestion {
+      margin-bottom: 10px;
+      padding: 10px;
+      background-color: var(--card-bg);
+      border-radius: 6px;
+      border-left: 4px solid var(--accent-color);
+    }
+    .suggestion strong a {
+      color: var(--primary-color);
+      text-decoration: none;
+    }
+    .suggestion strong a:hover {
+      text-decoration: underline;
+    }
+    .chatbot-links {
+      margin-top: 15px;
+      font-style: italic;
+    }
+    .chatbot-links a {
+      color: var(--secondary-color);
+      text-decoration: underline;
+    }
+    .chatbot-links a:hover {
+      color: #0089b7;
+    }
+  </style>
+</head>
+<body>
+  <h1>AI Exploration & Suggestion App</h1>
+  <p>Answer the questions below to receive personalized AI tool suggestions or chatbot prompts tailored to your teaching needs.</p>
+  <div class="section">
+    <h2>0. Choose your exploration</h2>
+    <!-- Hidden radios for accessibility; buttons below will control which one is checked -->
+    <div style="display:none;">
+      <input type="radio" id="mode-tools" name="exploreMode" value="tools" checked>
+      <input type="radio" id="mode-chatbots" name="exploreMode" value="chatbots">
+    </div>
+    <div class="mode-buttons">
+      <button type="button" id="modeToolsBtn" class="mode-btn active" data-mode="tools">AI Tool Recommendations</button>
+      <button type="button" id="modeChatbotsBtn" class="mode-btn" data-mode="chatbots">Chatbot Prompts</button>
+    </div>
+  </div>
+  <div class="section">
+    <h2>1. Your Role & Context</h2>
+    <label for="grade">Grade level:</label>
+    <select id="grade">
+      <option value="">-- Select grade level --</option>
+      <option value="preK">Pre-K / Early Childhood</option>
+      <option value="elementary">Elementary (K–5)</option>
+      <option value="middle">Middle (6–8)</option>
+      <option value="high">High (9–12)</option>
+      <option value="college">College / Adult</option>
+      <option value="other">Other</option>
+    </select>
+    <label for="subject">Subject area:</label>
+    <select id="subject">
+      <option value="">-- Select subject --</option>
+      <option value="ela">Language Arts / English</option>
+      <option value="math">Mathematics</option>
+      <option value="science">Science</option>
+      <option value="social">Social Studies / History</option>
+      <option value="world">World Languages</option>
+      <option value="arts">Arts / Music</option>
+      <option value="pe">PE / Health</option>
+      <option value="tech">Technology / Computer Science</option>
+      <option value="special">Special Education</option>
+      <option value="other">Other</option>
+    </select>
+  </div>
+  <div class="section">
+    <h2>2. Current Needs, Challenges, or Goals</h2>
+    <p>Select all that apply:</p>
+    <div class="needs-buttons">
+      <div class="need-btn" data-need="Plan">
+        <span class="icon">📝</span>
+        <div class="text">
+          <strong>Plan &amp; Write</strong>
+          <small>Create lesson outlines, rubrics, emails and communications.</small>
+        </div>
+      </div>
+      <div class="need-btn" data-need="Design">
+        <span class="icon">🎨</span>
+        <div class="text">
+          <strong>Design &amp; Materials</strong>
+          <small>Generate slides, handouts, visuals and choice boards.</small>
+        </div>
+      </div>
+      <div class="need-btn" data-need="Assess">
+        <span class="icon">✅</span>
+        <div class="text">
+          <strong>Assess &amp; Feedback</strong>
+          <small>Create quizzes, exit tickets, rubrics and feedback.</small>
+        </div>
+      </div>
+      <div class="need-btn" data-need="Research">
+        <span class="icon">📚</span>
+        <div class="text">
+          <strong>Research &amp; Notes</strong>
+          <small>Summarise topics, gather sources and organise notes.</small>
+        </div>
+      </div>
+      <div class="need-btn" data-need="PBL">
+        <span class="icon">🧠</span>
+        <div class="text">
+          <strong>Project Planning / PBL</strong>
+          <small>Draft driving questions, performance tasks and project plans.</small>
+        </div>
+      </div>
+      <div class="need-btn" data-need="Workflow">
+        <span class="icon">🗂</span>
+        <div class="text">
+          <strong>Workflow &amp; Organization</strong>
+          <small>Break tasks into steps and manage timelines and processes.</small>
+        </div>
+      </div>
+      <div class="need-btn" data-need="Differentiation">
+        <span class="icon">🧩</span>
+        <div class="text">
+          <strong>Differentiation / Leveling</strong>
+          <small>Adapt materials to different reading levels and learning needs.</small>
+        </div>
+      </div>
+      <!-- New need button for communication and collaboration -->
+      <div class="need-btn" data-need="Communication">
+        <span class="icon">🤝</span>
+        <div class="text">
+          <strong>Communication &amp; Collaboration</strong>
+          <small>Create announcements, newsletters and facilitate student discussion or family engagement.</small>
+        </div>
+      </div>
+    </div>
+    <label for="description">Describe your goal or challenge (optional):</label>
+    <textarea id="description" rows="3" placeholder="E.g., I need an engaging warm-up and an exit ticket for Monday's lesson..."></textarea>
+  </div>
+  <!-- Action button: generic label works for both tools and chatbots -->
+  <button id="suggestButton">Get Suggestions</button>
+  <div id="results" style="display:none;">
+    <h3 id="resultsHeader"></h3>
+    <p id="summary"></p>
+    <div id="resultsContent"></div>
+  </div>
+
+  <script>
+    function getSuggestions() {
+      const grade = document.getElementById('grade').value;
+      const subject = document.getElementById('subject').value;
+      const mode = document.querySelector('input[name="exploreMode"]:checked').value;
+      const needButtons = document.querySelectorAll('.need-btn.selected');
+      const needs = Array.from(needButtons).map(btn => btn.getAttribute('data-need'));
+      const description = document.getElementById('description').value.trim();
+
+      const resultsDiv = document.getElementById('results');
+      const resultsHeader = document.getElementById('resultsHeader');
+      const summaryPara = document.getElementById('summary');
+      const resultsContent = document.getElementById('resultsContent');
+
+      // Clear previous results
+      resultsHeader.innerHTML = '';
+      summaryPara.innerHTML = '';
+      resultsContent.innerHTML = '';
+      resultsDiv.style.display = 'none';
+
+      // Basic validation
+      if (!grade || !subject || needs.length === 0) {
+        alert('Please select a grade level, subject area, and at least one need.');
+        return;
+      }
+
+      // Build human‑readable needs string for summary
+      const readableNeeds = needs.map(n => {
+        switch (n) {
+          case 'Plan': return 'planning & writing';
+          case 'Design': return 'design & materials';
+          case 'Assess': return 'assessment & feedback';
+          case 'Research': return 'research & notes';
+          case 'PBL': return 'project planning / PBL';
+          case 'Workflow': return 'workflow & organization';
+          case 'Differentiation': return 'differentiation & leveling';
+          case 'Communication': return 'communication & collaboration';
+          default: return n.toLowerCase();
+        }
+      }).join(', ');
+
+      // Augment needs based on keywords in description (if description hints at additional tasks)
+      // We use a simplified keyword map here to infer categories from the user's goal/challenge
+      let needsForSuggestions = Array.from(needs);
+      const descLowerForAugment = description.toLowerCase();
+      const augmentKeywordMap = {
+        'Plan': ['lesson', 'plan', 'outline', 'warm-up', 'warm‑up', 'exit ticket', 'exit-ticket', 'agenda', 'letter', 'email', 'communication', 'write', 'writing'],
+        'Design': ['slide', 'slides', 'visual', 'handout', 'material', 'choice board', 'interactive', 'game', 'activity', 'presentation', 'design'],
+        'Assess': ['assessment', 'assess', 'quiz', 'exit ticket', 'exit-ticket', 'evaluation', 'formative', 'check', 'feedback', 'rubric', 'grade'],
+        'Research': ['research', 'note', 'summarize', 'summary', 'summarise', 'sources', 'organise', 'organize', 'background', 'explain'],
+        'PBL': ['project', 'project-based', 'project based', 'pbl', 'performance task', 'driving question', 'inquiry'],
+        'Workflow': ['workflow', 'organisation', 'organization', 'timeline', 'schedule', 'steps', 'task', 'manage', 'deadline'],
+        'Differentiation': ['differentiated', 'differentiation', 'reading level', 'reading-level', 'level', 'adapt', 'scaffold', 'tiered', 'accessibility']
+        ,
+        'Communication': ['communicat', 'parent', 'guardian', 'family', 'update', 'newsletter', 'announcement', 'discussion', 'collaborat', 'message']
+      };
+      Object.keys(augmentKeywordMap).forEach(cat => {
+        if (!needsForSuggestions.includes(cat)) {
+          const keywords = augmentKeywordMap[cat];
+          for (let i = 0; i < keywords.length; i++) {
+            if (descLowerForAugment.includes(keywords[i])) {
+              needsForSuggestions.push(cat);
+              break;
+            }
+          }
+        }
+      });
+
+      // Chatbot mode: build improved prompts with copy buttons and best practices, incorporating user's goal
+      if (mode === 'chatbots') {
+        resultsHeader.textContent = 'Chatbot Prompts';
+        summaryPara.innerHTML = `Here are some rich prompts you can try with your favourite chatbot. Replace <strong>[topic]</strong> with a specific concept you plan to teach.${description ? ' Your goal: ' + description : ''}`;
+        let prompts = [];
+        // Build improved prompts based on selected needs (augmented by description)
+        needsForSuggestions.forEach(n => {
+          switch (n) {
+            case 'Plan':
+              prompts.push(`Act as a ${gradeLabel(grade)} ${subjectLabel(subject)} teacher. Brainstorm <strong>three creative lesson plan ideas</strong> for next week’s class on [topic]. Each idea should include learning objectives, an engaging opening activity (e.g., a debate, quick experiment or discussion), and a brief formative assessment or exit ticket. Use active learning strategies rather than worksheets.`);
+              break;
+            case 'Design':
+              prompts.push(`I am teaching ${subjectLabel(subject)} to ${gradeLabel(grade)} students. Generate <strong>three engaging warm‑up or interactive activity ideas</strong> for a lesson on [topic]. Describe the activity type (poll, discussion, collaborative doodle, or small group brainstorm), suggest visuals or tech tools (slides, Jamboard, virtual whiteboard), and include one student check for understanding.`);
+              break;
+            case 'Assess':
+              prompts.push(`Design <strong>five diverse formative assessment ideas</strong> for a ${gradeLabel(grade)} ${subjectLabel(subject)} lesson on [topic]. Include quick writes, think‑pair‑share prompts, demonstrations, short quizzes and one open‑ended question. Provide tips for feedback or next steps instead of just right/wrong answers.`);
+              break;
+            case 'Research':
+              prompts.push(`Explain [topic] for ${gradeLabel(grade)} ${subjectLabel(subject)} students. Provide <strong>three key points</strong>, two thought‑provoking discussion questions and <strong>two reliable sources or citations</strong>. Suggest one follow‑up inquiry or experiment students might explore.`);
+              break;
+            case 'PBL':
+              prompts.push(`For a project‑based learning unit in a ${gradeLabel(grade)} ${subjectLabel(subject)} class, propose <strong>three driving questions</strong> focused on [topic]. For each question, include a hands‑on performance task idea and a possible final product (e.g., podcast, poster, interactive map).`);
+              break;
+            case 'Workflow':
+              prompts.push(`Break down a class project on [topic] for ${gradeLabel(grade)} ${subjectLabel(subject)} students into a <strong>step‑by‑step timeline</strong>. Include estimated durations, suggested student roles or groups, and one digital tool (e.g., Trello, Google Tasks) to manage tasks.`);
+              break;
+            case 'Differentiation':
+              prompts.push(`Adapt a ${subjectLabel(subject)} lesson on [topic] to <strong>three reading levels</strong> (below, at and above grade level) for ${gradeLabel(grade)} students. Summarize the content for each level and suggest one higher‑order thinking activity to assess comprehension for each.`);
+              break;
+            case 'Communication':
+              prompts.push(`Act as a ${gradeLabel(grade)} ${subjectLabel(subject)} teacher writing to families. Create <strong>three engaging communication ideas</strong> about [topic] (e.g., weekly newsletter section, class blog post, family discussion prompt). Each idea should highlight what students are learning, suggest a simple at‑home extension or conversation starter, and invite feedback or collaboration from families or caregivers.`);
+              break;
+            default:
+              prompts.push(`Brainstorm <strong>three ways AI can assist</strong> with a ${gradeLabel(grade)} ${subjectLabel(subject)} lesson on [topic], explaining the benefit of each approach.`);
+          }
+        });
+        // Incorporate user's goal into prompts (if provided)
+        const descSnippet = description ? ` Keep in mind my goal: ${description}` : '';
+        prompts = prompts.map(p => p + descSnippet);
+        // Limit prompts to between 3 and 5: take up to 5, but ensure at least 3 by repeating items if necessary
+        const limitedPrompts = [];
+        // Fill with up to 5 unique prompts
+        for (let i = 0; i < prompts.length && limitedPrompts.length < 5; i++) {
+          limitedPrompts.push(prompts[i]);
+        }
+        // If fewer than 3 prompts, repeat entries to reach 3
+        let repIndex = 0;
+        while (limitedPrompts.length < 3 && prompts.length > 0) {
+          limitedPrompts.push(prompts[repIndex % prompts.length]);
+          repIndex++;
+        }
+        // Populate prompt cards with copy buttons
+        limitedPrompts.forEach(prompt => {
+          const card = document.createElement('div');
+          card.className = 'suggestion';
+          card.style.display = 'flex';
+          card.style.justifyContent = 'space-between';
+          card.style.alignItems = 'center';
+          // text container
+          const pEl = document.createElement('p');
+          pEl.innerHTML = prompt;
+          pEl.style.flex = '1';
+          pEl.style.margin = '0';
+          // copy button
+          const copyBtn = document.createElement('button');
+          copyBtn.className = 'copy-btn';
+          copyBtn.textContent = 'Copy';
+          copyBtn.style.marginLeft = '8px';
+          copyBtn.style.flexShrink = '0';
+          copyBtn.onclick = () => {
+            const tempElement = document.createElement('div');
+            tempElement.innerHTML = prompt;
+            const textToCopy = tempElement.textContent || tempElement.innerText;
+            navigator.clipboard.writeText(textToCopy.trim());
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => { copyBtn.textContent = 'Copy'; }, 2000);
+          };
+          card.appendChild(pEl);
+          card.appendChild(copyBtn);
+          resultsContent.appendChild(card);
+        });
+        // Chatbot links
+        const botDiv = document.createElement('div');
+        botDiv.className = 'chatbot-links';
+        botDiv.innerHTML = `Try these prompts in: <a href="https://chat.openai.com" target="_blank" rel="noopener">ChatGPT</a>, <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a>, <a href="https://gemini.google.com" target="_blank" rel="noopener">Gemini</a>, <a href="https://copilot.microsoft.com" target="_blank" rel="noopener">Copilot</a>`;
+        resultsContent.appendChild(botDiv);
+
+        // Chatbot general tips (always visible)
+        const tipsHeader = document.createElement('h4');
+        tipsHeader.textContent = 'General tips for using chatbots';
+        tipsHeader.style.marginTop = '12px';
+        resultsContent.appendChild(tipsHeader);
+        const tipsList = document.createElement('ul');
+        const chatbotTips = [
+          'Begin with a concise, specific prompt that includes your role, audience, task and constraints (reading level, time limit) as well as the desired output format.',
+          'Provide context such as grade level, subject area, standards or learning objectives for more relevant results.',
+          'Ask for multiple ideas or examples and emphasise higher‑order thinking or authentic tasks to enrich the output.',
+          'Iterate on the output: ask the chatbot to revise, expand or adjust tone to suit your needs.',
+          'Always verify factual information and adapt content to match your curriculum, local policies and student needs.'
+        ];
+        chatbotTips.forEach(tip => {
+          const li = document.createElement('li');
+          li.textContent = tip;
+          tipsList.appendChild(li);
+        });
+        resultsContent.appendChild(tipsList);
+
+        // Show results and scroll into view
+        resultsDiv.style.display = 'block';
+        resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+
+      // AI Tools mode: build recommendations
+      resultsHeader.textContent = 'AI Tool Recommendations';
+      if (description) {
+        summaryPara.textContent = `For ${gradeLabel(grade)} teachers in ${subjectLabel(subject)}, addressing your needs around ${readableNeeds} with your goal: ${description}, we suggest:`;
+      } else {
+        summaryPara.textContent = `For ${gradeLabel(grade)} teachers in ${subjectLabel(subject)}, addressing your needs around ${readableNeeds}, we suggest:`;
+      }
+
+      // Mapping of needs to tools with urls and reasons
+      const toolMap = {
+        'Plan': [
+          {name: 'MagicSchool.AI', url: 'https://www.magicschool.ai/', reason: 'Teacher‑centric tool for generating creative lesson outlines, parent communications and rubric starters quickly—great for sparking engaging activities.'},
+          {name: 'Eduaide.AI', url: 'https://www.eduaide.ai/', reason: 'Helps you build lesson plans, graphic organisers and interactive materials using over 100 resource types.'},
+          {name: 'School AI', url: 'https://schoolai.com/', reason: 'Provides AI‑powered lesson plans, interactive slides, rubrics and reflection prompts integrated with your workflow.'}
+        ],
+        'Design': [
+          {name: 'Curipod', url: 'https://curipod.com/', reason: 'Creates interactive slides and warm‑ups that engage students through polls, collaboration and reflective prompts.'},
+          {name: 'School AI', url: 'https://schoolai.com/', reason: 'Generates slides, handouts and choice boards tailored to your grade and subject.'},
+          {name: 'MagicSchool.AI', url: 'https://www.magicschool.ai/', reason: 'Offers templates and generators for handouts and design tasks.'}
+        ],
+        'Assess': [
+          {name: 'QuestionWell', url: 'https://questionwell.org/', reason: 'Builds question sets for formative assessment—including higher‑order and open‑ended questions—aligned to your standards.'},
+          {name: 'Diffit', url: 'https://web.diffit.me/', reason: 'Produces leveled reading passages with comprehension and discussion questions plus export options to your LMS.'},
+          {name: 'Brisk', url: 'https://www.briskteaching.com/', reason: 'Automates quiz and rubric creation plus feedback drafts based on learning goals.'},
+          {name: 'MagicSchool.AI', url: 'https://www.magicschool.ai/', reason: 'Includes rubric and assessment generators for teachers.'}
+          ,{name: 'Snorkl', url: 'https://snorkl.app/', reason: 'Provides multimodal tasks where students explain their thinking via voice or drawing and receive instant AI feedback; teachers get analytics.'}
+        ],
+        'Research': [
+          {name: 'Perplexity', url: 'https://www.perplexity.ai/', reason: 'A research assistant that summarizes topics and cites sources—great for creating explainer paragraphs.'},
+          {name: 'NotebookLM', url: 'https://notebooklm.google.com/', reason: 'Organizes notes and drafts summaries from uploaded materials or links for your next lesson.'}
+        ],
+        'PBL': [
+          {name: 'Mastery Mate – PBL', url: 'https://masterymate.ai/', reason: 'Guides you through crafting driving questions and performance tasks for project‑based learning.'}
+        ],
+        'Workflow': [
+          {name: 'Goblin Tools', url: 'https://goblin.tools/', reason: 'Breaks down big projects into actionable steps with time estimates to help you stay organized.'}
+        ],
+        'Differentiation': [
+          {name: 'Diffit', url: 'https://web.diffit.me/', reason: 'Generates leveled texts and adaptation options for diverse learners based on your material.'},
+          {name: 'Brisk', url: 'https://www.briskteaching.com/', reason: 'Offers differentiation features like rewriting passages at different reading levels.'}
+        ]
+        ,
+        'Communication': [
+          {name: 'MagicSchool.AI', url: 'https://www.magicschool.ai/', reason: 'Offers templates and AI assistance for crafting parent updates, announcements and communications quickly.'},
+          {name: 'Eduaide.AI', url: 'https://www.eduaide.ai/', reason: 'Provides messaging and email generators to help you compose class newsletters or family communications.'},
+          {name: 'School AI', url: 'https://schoolai.com/', reason: 'Facilitates communication through Spaces and check‑ins, allowing you to connect with students and families under teacher control.'}
+        ]
+      };
+
+      // Compile suggestions based on selected needs (augmented by description)
+      let compiled = [];
+      needsForSuggestions.forEach(n => {
+        if (toolMap[n]) {
+          compiled = compiled.concat(toolMap[n]);
+        }
+      });
+      // Deduplicate by tool name while preserving order
+      const unique = [];
+      const namesSeen = new Set();
+      compiled.forEach(item => {
+        if (!namesSeen.has(item.name)) {
+          namesSeen.add(item.name);
+          unique.push(item);
+        }
+      });
+
+      // --- Customise ordering based on user description ---
+      // Map each tool to the needs categories it appears in
+      const toolCategories = {};
+      Object.keys(toolMap).forEach(cat => {
+        toolMap[cat].forEach(tool => {
+          if (!toolCategories[tool.name]) {
+            toolCategories[tool.name] = [];
+          }
+          toolCategories[tool.name].push(cat);
+        });
+      });
+      // Keyword mapping to categories to help detect relevance in description
+      const keywordMap = {
+        'Plan': ['lesson', 'plan', 'outline', 'warm-up', 'warm‑up', 'exit ticket', 'exit-ticket', 'agenda', 'letter', 'email', 'communication', 'write', 'writing'],
+        'Design': ['slide', 'slides', 'visual', 'handout', 'material', 'choice board', 'interactive', 'game', 'activity', 'presentation', 'design'],
+        'Assess': ['assessment', 'assess', 'quiz', 'exit ticket', 'exit-ticket', 'evaluation', 'formative', 'check', 'feedback', 'rubric', 'grade'],
+        'Research': ['research', 'note', 'summarize', 'summary', 'summarise', 'sources', 'organise', 'organize', 'background', 'explain'],
+        'PBL': ['project', 'project-based', 'project based', 'pbl', 'performance task', 'driving question', 'inquiry'],
+        'Workflow': ['workflow', 'organisation', 'organization', 'timeline', 'schedule', 'steps', 'task', 'manage', 'deadline'],
+        'Differentiation': ['differentiated', 'differentiation', 'reading level', 'reading-level', 'level', 'adapt', 'scaffold', 'tiered', 'accessibility']
+        ,
+        'Communication': ['communicat', 'parent', 'guardian', 'family', 'update', 'newsletter', 'announcement', 'discussion', 'collaborat', 'message']
+      };
+      // Compute scores for each unique tool based on description keywords
+      const descLower = description.toLowerCase();
+      const toolScores = {};
+      unique.forEach(tool => {
+        let score = 0;
+        const cats = toolCategories[tool.name] || [];
+        cats.forEach(cat => {
+          const keywords = keywordMap[cat] || [];
+          keywords.forEach(kw => {
+            if (descLower.includes(kw)) {
+              score += 1;
+            }
+          });
+        });
+        toolScores[tool.name] = score;
+      });
+      // Sort unique suggestions by descending score to prioritise those matching description
+      unique.sort((a, b) => {
+        const scoreDiff = (toolScores[b.name] || 0) - (toolScores[a.name] || 0);
+        // If scores tie, maintain original order using namesSeen insertion order (unique list order)
+        return scoreDiff;
+      });
+
+      // Determine if chatbots might suffice (for simple plan & research only)
+      const simpleNeeds = ['Plan', 'Research'];
+      let chatbotRecommended = false;
+      if (needsForSuggestions.every(n => simpleNeeds.includes(n))) {
+        chatbotRecommended = true;
+      }
+
+      // Limit number of unique suggestions to at most 5
+      const limited = unique.slice(0, 5);
+      // Define tips for specific tools (used in dropdowns)
+      const toolTips = {
+        'MagicSchool.AI': [
+          'Sign up and explore the built‑in lesson plan, assessment and communication generators designed for teachers.',
+          'Start by opening the lesson plan generator: enter your topic, grade level and any standards or constraints; the tool will produce a quick outline you can refine.',
+          'Use the generated content as a starting point and customise it for your class—MagicSchool emphasises saving time by generating plans and materials quickly.'
+        ],
+        'Eduaide.AI': [
+          'Create a free account and choose a resource type such as lesson plan, graphic organiser or activity.',
+          'Provide the topic or objective you’re teaching and click “Generate” to produce content; the tool lets you specify keywords and grade level.',
+          'Review the output, refine sections by editing or regenerating and then export it to your preferred format.'
+        ],
+        'School AI': [
+          'Sign in to the platform and explore the AI tools menu for tasks like lesson planning, rubric creation or designing materials.',
+          'Fill in details about your class and objectives; School AI will generate tailored resources integrated with your workflow.',
+          'Use the provided templates and adjust them to align with your curriculum.'
+        ],
+        'Curipod': [
+          'Sign up or log in and click “Create a lesson”. Enter your topic and include learning objectives or standards.',
+          'Select grade level, language and the number of slides, then click “Get lesson” to generate an interactive deck.',
+          'Try the “Curify My Slides” option to transform existing presentations into interactive lessons with polls and checks for understanding.'
+        ],
+        'QuestionWell': [
+          'Start by entering the topic you are teaching and optionally paste a text or link a video/website.',
+          'Add learning outcomes or standards, adjust reading level and language, choose question types, then click “Generate” to create question sets.',
+          'Export the questions to your preferred format or directly into your LMS.'
+        ],
+        'Diffit': [
+          'Go to the Diffit website and enter a topic, text passage or link you want to adapt.',
+          'Choose the reading level and language you want the output to be in and click “Generate Resources”.',
+          'The tool will produce leveled reading passages, vocabulary lists and comprehension questions you can export or embed in your LMS.'
+        ],
+        'Brisk': [
+          'Install the Brisk teaching extension or use the platform to generate questions or rubrics.',
+          'Highlight text or input your topic, choose the type of questions or rubric you need and adjust reading levels as required.',
+          'Review and refine the generated assessments before sharing with students.'
+        ],
+        'Perplexity': [
+          'Visit perplexity.ai and type any question; the tool summarizes search results with sources and citations.',
+          'No account is required but you can create one to save your searches and customise settings.',
+          'Use the cited sources to verify information and click them for deeper research.'
+        ],
+        'NotebookLM': [
+          'Create a new notebook and upload up to 50 sources such as PDFs, Google Docs or website links.',
+          'Ask questions about your uploaded materials; NotebookLM uses Gemini to synthesise information across sources and draft responses.',
+          'Use the Notebook Guide feature to generate summaries, outlines or Q&A formats from your notes and continue refining.'
+        ],
+        'Mastery Mate – PBL': [
+          'Sign up and explore the PBL design modules; start with a driving question and select grade and subject.',
+          'Use the prompts to craft performance tasks, rubrics and timelines for your project.',
+          'Iteratively refine your project plan based on feedback and curriculum requirements.'
+        ],
+        'Goblin Tools': [
+          'Open goblin.tools and navigate to “Magic To‑Do”. Enter your project or assignment and let the tool break it into actionable steps.',
+          'Adjust the step list and time estimates to match your schedule.',
+          'Use Goblin Tools regularly to organise complex tasks and track progress.'
+        ],
+        'Snorkl': [
+          'Create a free Snorkl account and set up a class or select a sample activity from the library.',
+          'Use the “Create an Activity” option to draft a prompt and specify the question or task. Students can respond by drawing on a whiteboard, typing or recording their voice.',
+          'Once students submit their responses, Snorkl’s AI will assess their thinking, highlight strengths and misconceptions, and provide targeted feedback for improvement. Teachers can review analytics and assign further practice.'
+        ]
+      };
+
+      // Create mappings for per-tool reasons based on selected needs
+      const toolReasonByCategory = {
+        'MagicSchool.AI': {
+          'Plan': 'generate creative lesson outlines and parent communications quickly',
+          'Design': 'create interactive slides, handouts and design tasks',
+          'Assess': 'build rubrics and assessment items',
+          'Communication': 'craft parent updates and announcements',
+          'Differentiation': 'adapt instructions for different levels'
+        },
+        'Eduaide.AI': {
+          'Plan': 'build lesson plans and graphic organisers using over 100 resource types',
+          'Design': 'produce interactive materials such as handouts or graphic organisers',
+          'Communication': 'generate messages and emails for class newsletters or family updates'
+        },
+        'School AI': {
+          'Plan': 'generate lesson plans, rubrics and reflection prompts integrated with your workflow',
+          'Design': 'create interactive slides, handouts and choice boards tailored to your class',
+          'Assess': 'offer formative checks and feedback prompts',
+          'Communication': 'facilitate teacher and family check‑ins through custom Spaces'
+        },
+        'Curipod': {
+          'Design': 'create interactive slides and warm‑ups with polls and collaborative activities'
+        },
+        'QuestionWell': {
+          'Assess': 'build question sets including higher‑order and open‑ended items aligned to standards'
+        },
+        'Diffit': {
+          'Assess': 'produce leveled reading passages with comprehension and discussion questions',
+          'Differentiation': 'offer reading materials at multiple levels and languages'
+        },
+        'Brisk': {
+          'Assess': 'automate quiz and rubric creation plus feedback drafts',
+          'Differentiation': 'rewrite texts at different reading levels'
+        },
+        'Perplexity': {
+          'Research': 'summarize topics and cite sources for explainer paragraphs'
+        },
+        'NotebookLM': {
+          'Research': 'organize notes and draft summaries or Q&A from uploaded materials'
+        },
+        'Mastery Mate – PBL': {
+          'PBL': 'guide you through crafting driving questions and performance tasks for projects'
+        },
+        'Goblin Tools': {
+          'Workflow': 'break projects into actionable steps with time estimates'
+        },
+        'Snorkl': {
+          'Assess': 'enable students to explain their thinking via voice or drawing and receive instant feedback',
+          'Differentiation': 'provide personalized feedback and analytics across multiple languages and levels'
+        }
+      };
+      // Human‑readable mapping for category names used in reasons
+      const readableCat = {
+        'Plan': 'planning & writing',
+        'Design': 'design & materials',
+        'Assess': 'assessment & feedback',
+        'Research': 'research & notes',
+        'PBL': 'project planning / PBL',
+        'Workflow': 'workflow & organization',
+        'Differentiation': 'differentiation & leveling',
+        'Communication': 'communication & collaboration'
+      };
+      // For each suggestion, create a collapsible details element with dynamic reason and tips
+      limited.forEach(item => {
+        const details = document.createElement('details');
+        details.className = 'suggestion';
+        const summary = document.createElement('summary');
+        // Link element
+        const link = document.createElement('a');
+        link.href = item.url;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.textContent = item.name;
+        // Determine matched categories for the current tool
+        const categoriesForTool = toolCategories[item.name] || [];
+        const matched = categoriesForTool.filter(cat => needsForSuggestions.includes(cat));
+        // Build reason text
+        let reasonText = '';
+        if (matched.length > 0) {
+          // Build list of readable categories for explanation
+          const readableList = matched.map(c => readableCat[c]).join(' and ');
+          const segments = [];
+          matched.forEach(cat => {
+            const reasonByCat = toolReasonByCategory[item.name] && toolReasonByCategory[item.name][cat];
+            if (reasonByCat) segments.push(reasonByCat);
+          });
+          if (segments.length > 0) {
+            reasonText = `Because you selected ${readableList}, this tool can ${segments.join(' and ')}.`;
+          }
+        }
+        // If no dynamic reason built, fall back to default reason from toolMap
+        if (!reasonText) {
+          reasonText = item.reason;
+        }
+        // Append additional info for certain tools
+        if (item.name === 'MagicSchool.AI') {
+          reasonText += ' It also offers student AI spaces where teachers set the rules and monitor usage, providing guardrails and moderation.';
+        }
+        if (item.name === 'School AI') {
+          reasonText += ' It provides teacher‑led, student‑safe Spaces that give real‑time insights while keeping educators in control and flagging safety concerns.';
+        }
+        if (item.name === 'Snorkl') {
+          reasonText += ' Students can record their thinking and receive immediate AI feedback, while teachers get analytics to monitor progress and adjust instruction.';
+        }
+        // Compose summary HTML
+        summary.innerHTML = `<strong></strong>`;
+        summary.firstChild.appendChild(link);
+        const reasonSpan = document.createElement('span');
+        reasonSpan.style.marginLeft = '6px';
+        reasonSpan.textContent = reasonText;
+        summary.appendChild(reasonSpan);
+        details.appendChild(summary);
+        // Tips list
+        const tips = toolTips[item.name];
+        if (tips) {
+          const ul = document.createElement('ul');
+          ul.style.marginTop = '6px';
+          tips.forEach(tip => {
+            const li = document.createElement('li');
+            li.textContent = tip;
+            ul.appendChild(li);
+          });
+          details.appendChild(ul);
+        }
+        resultsContent.appendChild(details);
+      });
+
+      // Additional recommendation about chatbots vs tools
+      const extra = document.createElement('p');
+      extra.style.marginTop = '8px';
+      if (chatbotRecommended) {
+        extra.innerHTML = '<em>Since your tasks are general writing or research focused, starting with a chatbot such as ChatGPT, Claude, Gemini or Copilot may be sufficient. If you need more specialized features, consider the tools listed above.</em>';
+      } else {
+        extra.innerHTML = '<em>Your tasks involve specialized outputs, so we recommend trying one of the purpose‑built AI tools above in addition to, or instead of, a general chatbot.</em>';
+      }
+      resultsContent.appendChild(extra);
+
+      resultsDiv.style.display = 'block';
+      // Automatically scroll to results when suggestions are displayed
+      resultsDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function gradeLabel(value) {
+      switch (value) {
+        case 'preK': return 'Pre‑K/early childhood';
+        case 'elementary': return 'elementary';
+        case 'middle': return 'middle school';
+        case 'high': return 'high school';
+        case 'college': return 'college/adult';
+        default: return 'other';
+      }
+    }
+    function subjectLabel(value) {
+      switch (value) {
+        case 'ela': return 'language arts/English';
+        case 'math': return 'mathematics';
+        case 'science': return 'science';
+        case 'social': return 'social studies/history';
+        case 'world': return 'world languages';
+        case 'arts': return 'arts/music';
+        case 'pe': return 'PE/health';
+        case 'tech': return 'technology/computer science';
+        case 'special': return 'special education';
+        default: return 'other';
+      }
+    }
+
+    document.getElementById('suggestButton').addEventListener('click', getSuggestions);
+
+    // Mode button click handlers
+    const modeButtons = document.querySelectorAll('.mode-btn');
+    modeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Remove active class from all buttons
+        modeButtons.forEach(b => b.classList.remove('active'));
+        // Add active class to clicked button
+        btn.classList.add('active');
+        // Set hidden radio value
+        const mode = btn.getAttribute('data-mode');
+        if (mode === 'tools') {
+          document.getElementById('mode-tools').checked = true;
+        } else {
+          document.getElementById('mode-chatbots').checked = true;
+        }
+        // Automatically regenerate suggestions if enough information is available
+        const gradeVal = document.getElementById('grade').value;
+        const subjectVal = document.getElementById('subject').value;
+        const selectedNeeds = document.querySelectorAll('.need-btn.selected');
+        if (gradeVal && subjectVal && selectedNeeds.length > 0) {
+          // Call getSuggestions to refresh output based on new mode
+          getSuggestions();
+        }
+      });
+    });
+
+    // Need button click handlers (toggle selection)
+    const needButtons = document.querySelectorAll('.need-btn');
+    needButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.classList.toggle('selected');
+      });
+    });
+  </script>
+</body>
+</html>
