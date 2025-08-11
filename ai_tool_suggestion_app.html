@@ -449,6 +449,17 @@
           }
           return item.text;
         });
+
+        // Always include at least one prompt that directly addresses the user’s stated goal.
+        // If a goal/description is provided, prepend a custom prompt that integrates the goal into the task.
+        if (description) {
+          // Build a goal-specific prompt that clearly states the user’s challenge and requests AI-supported strategies.
+          // Trim trailing punctuation from the description to avoid double periods in the generated prompt.
+          const descClean = description.trim().replace(/[.!?]$/, '');
+          const goalPrompt = `Here is my challenge: ${descClean}. For my ${gradeLabel(grade)} ${subjectLabel(subject)} class, suggest three AI‑supported strategies or creative activities aligned to [standard or learning target] that will help me accomplish this while engaging students.`;
+          // Put the goal-specific prompt at the front of the list so it shows up first
+          prompts.unshift(goalPrompt);
+        }
         // Limit prompts to between 3 and 5: take up to 5, but ensure at least 3 by repeating items if necessary
         const limitedPrompts = [];
         for (let i = 0; i < prompts.length && limitedPrompts.length < 5; i++) {
